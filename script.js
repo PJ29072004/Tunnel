@@ -1,6 +1,6 @@
 const can = document.getElementById("C")
 can.style.zIndex = -1
-can.style.position = 'absolute'
+can.style.position = 'fixed'
 const c = can.getContext("2d")
 const rect = can.getBoundingClientRect()
 var cW = 1
