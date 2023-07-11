@@ -13,7 +13,7 @@ var lw = 0.1
 c.LineWidth = lw
 var Color = "black"
 var Font = "20px serif"
-var X0=0,Y0=0,X,Y
+var X,Y
 var fX = cX/2 + 30 
 var fY = cY - 50
 var fW = cX/2  - 100
@@ -53,56 +53,6 @@ function point(x,y){
     Dot()
 }
 /**
- * 2D plots
- * @param {*} data object with x,y properties being arrays of coordinates of points
- * @param {*} x_range [x_low,x_high] The x values shown at edges of frame
- * @param {*} y_range [y_low,y_high] The y values shown at edges of frame
- * @param {*} frame If true, draws the frame
- */
-function plot(data,x_range=xlim,y_range=ylim,frame=false){
-    xlim = x_range
-    ylim = y_range
-    var n = data.x.length
-    if(n !== data.y.length){
-        print("incompatible arrays")
-        return;
-    }
-
-    switch (data.type) {
-
-        case "scatter": 
-            for(var i=0;i<n;i++){
-                GoTo(data.x[i],data.y[i])
-                if(data.color){c.fillStyle=data.color[i]}
-                if(data.r){Dot(c,X,Y,data.r[i])}
-                else{Dot()}
-            }
-            break;
-
-        case "bar":
-            for(var i=0;i<n;i++){
-                Rect(data.x[i],0,data.width,data.y[i])
-                if(data.color){c.fillStyle=data.color[i];c.fill()}
-            }
-            break;
-
-        case "line":
-        case undefined:
-            c.beginPath()
-            GoTo(data.x[0],data.y[0])
-            for(var i=1;i<data.x.length;i++){
-                LineTo(data.x[i],data.y[i])
-            }
-            c.stroke()
-            break;
-
-        default:
-            print("Unrecognised type for plot")
-    }
-    Remember()
-    if(frame){Frame()}
-}
-/**
  * Draws the frame
  * @param {*} Frame_Left fraction of cX
  * @param {*} Frame_Bottom fraction of cY
@@ -122,39 +72,7 @@ function Frame(Frame_Left=fX/cX,Frame_Bottom= 1 - fY/cY,Frame_Width = fW/cX,Fram
     GoTo(xlim[1],ylim[1])
     c.fillText(txt,X,Y)
 }
-/**
- * Plots a single variable, single valued function
- * @param {*} x_range [x_low,x_high] The x values shown at edges of frame
- * @param {*} y_range [y_low,y_high] The y values shown at edges of frame
- * @param {*} frame If true, draws the frame
- * @param {*} n number of samples to take 
- * @param {*} f function to plot
- */
-function fplot(x_range,y_range,n,f,frame=false){
-    print("fplot running")
-    if(!y_range){
-    var ymin = f(x_range[0])
-    var ymax = f(x_range[1])
-    }
-    var dx = (x_range[1] - x_range[0])/n
-    var x = []
-    var y = []
-    for(var i=0;i<=n;i++){
-        y.push(f(x_range[0] + dx*i))
-        x.push(x_range[0] + dx*i)
-        if(!y_range){
-        if(y[i]>ymax){ymax = y[i]}
-        if(y[i]<ymin){ymin = y[i]}
-        }
-    }
-    if(!y_range){y_range=[ymin,ymax]}
-    data = {
-        "x":x,
-        "y":y,
-        "type":"line",
-    }
-    plot(data,x_range,y_range,frame)
-}
+
 /**
  * Plots a 3D mesh
  * @param {*} data object with x,y properties being nested arrays of coordinates of points
@@ -286,6 +204,7 @@ function meshPlot(data,contour=false,x_range=xlim,y_range=ylim,frame=false){
     Remember()
     if(frame){Frame()}
 }
+
 /**
  * @param {*} A Angle of rotation (radians)
  * @param {*} W Axis of rotation (x,y,z). Not specifying axis will make the z axis the axis of rotation
@@ -294,6 +213,7 @@ function meshPlot(data,contour=false,x_range=xlim,y_range=ylim,frame=false){
 function RotM(A,W){
     return Matrix(RM(A,W))
 }
+
 /**
  * Transforms a "data" object using a function
  * @param {*} data mesh or line 
@@ -335,6 +255,7 @@ function Transform(data,f,use=false){
         }
     }
 }
+
 function Torus(R,r){
     return (function(data,i,use=false){
         if(!use){use=data}
@@ -345,6 +266,7 @@ function Torus(R,r){
         data.z[i] = r*Math.sin(x)
     })
 }
+
 /**
  * Converts a matrix into a transformation function
  * @param {*} M The matrix to be used
@@ -401,6 +323,7 @@ function RM(A,W){
     }
     return M
 }
+
 /**
  * Creates a grid (mesh)
  * @param {*} m number of rows
@@ -446,92 +369,7 @@ function grid(m=10,n=10,x_range=xlim,y_range=ylim,type="3d"){
     }
 
 }
-function matshow(M,x0=X,y0=Y,opt={}){
-    var def = {
-        num:true,
-        lin:false,
-        brac:true,
-        shade:true,
-        high:1,
-        low:0,
-    }
-    for(var option in def){
-        if(opt[option]==undefined){
-            opt[option] = def[option]
-        }
-    }
-    var m = M.length
-    var n = M[0].length
-    var w = 0
-    var h = 0
-    var x = x0
-    var y = y0
-    var space = c.measureText(" ").width
-    for(var i=0;i<m;i++){
-        for(var j=0;j<n;j++){
-            var lines = getLines(M[i][j].toString())
-            if(lines.w + 2*space > w){
-                w = lines.w + 2*space
-            }
-            if(lines.h + 2*space > h){
-                h = lines.h + 2*space
-            }
-        }
-    }
-    y = y0
-    for(var i=0;i<m;i++){
-        x = x0
-        for(var j=0;j<n;j++){
-            var val = 255*(M[i][j]-opt.low)/(opt.high-opt.low)
-            if(opt.shade){
-                c.fillStyle = `rgb(${255-val},${255-val},${255-val})`
-                c.fillRect(x,y,w,h)
-                c.fillStyle=`rgb(${val},${val},${val})`
-            }
-            if(opt.num){
-                text(M[i][j].toString(),x+space,y+space)
-            }
-            x += w
-        }
-        y += h
-    }
-    if(opt.lin){
-    c.beginPath()
-    y = y0
-    for(var i=0;i<m+1;i++){
-        c.moveTo(x0,y)
-        c.lineTo(x0+w*n,y)
-        y += h
-    }
-    x = x0
-    for(var i=0;i<n+1;i++){
-        c.moveTo(x,y0)
-        c.lineTo(x,y0+h*m)
-        x += w
-    }
-    c.stroke()
-    }
-    if(opt.brac){
-    c.beginPath()
 
-    c.moveTo(x0,y0)
-    c.lineTo(x0,y0+m*h)
-    c.moveTo(x0 + w*n,y0)
-    c.lineTo(x0 + w*n,y0+m*h)
-
-    c.moveTo(x0,y0)
-    c.lineTo(x0+w/2,y0)
-    c.moveTo(x0+n*w,y0)
-    c.lineTo(x0+n*w-w/2,y0)
-
-    c.moveTo(x0,y0+m*h)
-    c.lineTo(x0+w/2,y0+m*h)
-    c.moveTo(x0+n*w,y0+m*h)
-    c.lineTo(x0+n*w-w/2,y0+m*h)
-
-    c.stroke()
-    }
-}
 function Remember(color=Color,Line_width=lw,font=Font){
     c.lineCap = 'round'
     c.fillStyle = Color = color
@@ -539,13 +377,7 @@ function Remember(color=Color,Line_width=lw,font=Font){
     c.font = Font = font
     c.LineWidth = lw = Line_width
 }
-/**
- * Tweaks the layout
- * @param {*} s Fraction of window width taken by code area
- * @param {*} Top Topmost position in button layout
- * @param {*} Bottom Bottom position in button layout
- * @param {*} canResize If true, defaults the zoom on resize
- */
+
 function resize(){
     cX = window.innerWidth
     cY = window.innerHeight
@@ -557,6 +389,7 @@ function resize(){
     can.height = cY
     Remember()
 }
+
 /**
  * Function Animation
  * @param {*} f list of functions to call
@@ -581,9 +414,11 @@ function funcAnim(f,n=[100],T=[5000],dt=[false],i=0){
         }
     },dt[i])
 }
+
 function clear(){
     c.clearRect(0,0,cX,cY)
 }
+
 function Dot(ctx=c,x=X,y=Y) {
     var l = ctx.lineWidth
     ctx.lineWidth = 0
@@ -597,6 +432,8 @@ function point(x,y){
     GoTo(x,y)
     Dot()
 }
+
+
 function Doit(){
     clear()
     c.fillStyle = 'black'
@@ -607,32 +444,28 @@ function Doit(){
 function zoomin(){
     z_eye += 1
     z_screen += 1
-    Doit()
 }
 function zoomout(){
     z_eye -= 1
     z_screen -= 1
-    Doit()
 }
 function l(){
     x_eye -= 10
-    Doit()
 }
 function r(){
     x_eye += 10
-    Doit()
 }
 function u(){
     y_eye += 10
-    Doit()
 }
 function d(){
     y_eye -= 10
 }
-LRM = RotM( 0.05,[0,1,0])
-RRM = RotM(-0.05,[0,1,0])
-URM = RotM( 0.05,[1,0,0])
-DRM = RotM(-0.05,[1,0,0])
+dA = 0.05
+LRM = RotM( dA,[0,1,0])
+RRM = RotM(-dA,[0,1,0])
+URM = RotM( dA,[1,0,0])
+DRM = RotM(-dA,[1,0,0])
 function L(){
     Transform(g,LRM)
 }
@@ -645,40 +478,40 @@ function U(){
 function D(){
     Transform(g,DRM)
 }
+Funkeys = {
+    '+':zoomin,
+    '-':zoomout,
+    'l':l,
+    'r':r,
+    'u':u,
+    'd':d,
+    'L':L,
+    'R':R,
+    'U':U,
+    'D':D,
+}
+pressed = {
+    '+':false,
+    '-':false,
+    'l':false,
+    'r':false,
+    'u':false,
+    'd':false,
+    'L':false,
+    'R':false,
+    'U':false,
+    'D':false,
+}
+Loops = {}
+dt = 80
 window.onkeydown=function(e){
-    if(e.key=='+'){
-        z_eye += 1
-        z_screen += 1
-    }
-    if(e.key=='-'){
-        z_eye -= 1
-        z_screen -= 1
-    }
-    if(e.key=='l'){
-        x_eye -= 4
-    }
-    if(e.key=='r'){
-        x_eye += 4
-    }
-    if(e.key=='u'){
-        y_eye -= 4
-    }
-    if(e.key=='d'){
-        y_eye += 4
-    }
-    if(e.key=='L'){
-        Transform(g,RotM(0.03,[0,1,0]))
-    }
-    if(e.key=='R'){
-        Transform(g,RotM(-0.03,[0,1,0]))
-    }
-    if(e.key=='U'){
-        Transform(g,RotM(0.03,[1,0,0]))
-    }
-    if(e.key=='D'){
-        Transform(g,RotM(-0.03,[1,0,0]))
-    }
-    Doit()
+    if(pressed[e.key]){return}
+    Loops[e.key] = setInterval(function(){Funkeys[e.key]();Doit();},dt)
+    pressed[e.key] = true
+}
+window.onkeyup=function(e){
+    clearInterval(Loops[e.key])
+    pressed[e.key]=false
 }
 window.onresize=resize
 window.onload=function(){
