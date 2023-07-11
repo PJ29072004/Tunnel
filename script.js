@@ -303,6 +303,98 @@ function RM(A,W){
     }
     return M
 }
+function applyM(M,v){
+    var x = v[0]
+    var y = v[1]
+    var z = v[2]
+    var v2 = [0,0,0]
+    v2[0] = M[0][0]*x + M[0][1]*y + M[0][2]*z
+    v2[1] = M[1][0]*x + M[1][1]*y + M[1][2]*z
+    v2[2] = M[2][0]*x + M[2][1]*y + M[2][2]*z
+    return v2
+}
+function subtract(p2,p1){
+    return [p2[0]-p1[0],p2[1]-p1[1],p2[2]-p1[2]]
+}
+function add(p2,p1){
+    return [p2[0]+p1[0],p2[1]+p1[1],p2[2]+p1[2]]
+}
+function cross(v1,v2){
+    var v3 = [0,0,0]
+    v3[0] = v1[1]*v2[2] - v1[2]*v2[1]
+    v3[1] = v1[2]*v2[0] - v1[0]*v2[2]
+    v3[2] = v1[0]*v2[1] - v1[1]*v2[0]
+    return v3
+}
+function normalize(v){
+    l = (v[0]**2 + v[1]**2 + v[2]**2)**0.5
+    return [v[0]/l,v[1]/l,v[2]/l]
+}
+function angle(v1,v2){
+    var dot = 0
+    var l1 = 0
+    var l2 = 0
+    for(var i=0;i<3;i++){
+        dot+=v1[i]*v2[i]
+        l1+=v1[i]**2
+        l2+=v2[i]**2
+    }
+    l1 = l1**0.5
+    l2 = l2**0.5
+    var c = dot/(l1*l2)
+    return Math.acos(c)
+
+}
+function norm(v){
+    var S=0
+    for(var i=0;i<v.length;i++){
+        S += v[i]**2
+    }
+    return S**0.5
+}
+function Scale(v,s){
+    for(var i=0;i<v.length;i++){
+        v[i] *= s
+    }
+}
+function Round(v){
+    for(var i=0;i<v.length;i++){
+        v[i] = Math.round(v[i])
+    }
+}
+var pulses = 3
+function ColorCircleOn(p0,p1,p2){
+    var v1 = subtract(p1,p0)
+    var v2 = subtract(p2,p0)
+    var n0 = cross(v1,v2)
+    var n1 = cross(n0,v1)
+    var n2 = cross(v2,n0)
+    var n02 = norm(n0)**2
+    var v12 = norm(v1)**2
+    var v22 = norm(v2)**2
+    Scale(n1,v22/(2*n02)) 
+    Scale(n2,v12/(2*n02))
+    var c = add(n1,n2)
+    c = add(c,p0)
+    r0 = subtract(p0,c)
+    return function(t){
+        var R = RM(2*pulses*Math.PI*t,n0)
+        var r = applyM(R,r0)
+        var p = add(c,r)
+        Round(p)
+        return `rgb(${p[0]},${p[1]},${p[2]})`
+    }
+    
+}
+function circmap(t){
+    var s = Math.sin(pulses*2*Math.PI*t)
+    var c = Math.cos(pulses*2*Math.PI*t)
+    var r = Math.floor(255*((1/3) + c*(2/3) + s*(0)))
+    var g = Math.floor(255*((1/3) + c*(-1/3) + s*(3**(-0.5))))
+    var b = Math.floor(255*((1/3) + c*(-1/3) + s*(-(3**(-0.5)))))
+    return `rgb(${r},${g},${b})`
+}
+Circ = ColorCircleOn([23,0,54],[214,33,166],[97,176,205])
 
 /**
  * Creates a grid (mesh)
@@ -472,18 +564,11 @@ window.onkeyup=function(e){
     pressed[e.key]=false
 }
 window.onresize=resize
-var pulses = 3
-function circmap(t){
-    var s = Math.sin(pulses*2*Math.PI*t)
-    var c = Math.cos(pulses*2*Math.PI*t)
-    var r = Math.floor(255*((1/3) + c*(2/3) + s*(0)))
-    var g = Math.floor(255*((1/3) + c*(-1/3) + s*(3**(-0.5))))
-    var b = Math.floor(255*((1/3) + c*(-1/3) + s*(-(3**(-0.5)))))
-    return `rgb(${r},${g},${b})`
-}
+
+
 window.onload=function(){
     resize() 
-    g = grid(100,100,[0,2*Math.PI],[-Math.PI,Math.PI],'3d',circmap)
+    g = grid(100,100,[0,2*Math.PI],[-Math.PI,Math.PI],'3d',Circ)
     var R = 100
     var r = 30
     Transform(g,Torus(R,r))
@@ -494,3 +579,5 @@ window.onload=function(){
     Transform(g,RotM(Math.PI/2,[1,0,0]))
     Remember('pink')
 }
+
+
