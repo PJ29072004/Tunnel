@@ -3,26 +3,16 @@ can.style.zIndex = -1
 can.style.position = 'fixed'
 const c = can.getContext("2d")
 const rect = can.getBoundingClientRect()
-var cW = 1
-var cH = 1
-var cX = window.innerWidth
-var cY = window.innerHeight
-var xlim = [-20,20]
-var ylim = [-20,20]
-var lw = 0.1
-c.LineWidth = lw
+var cX,cY
+var xlim,ylim
+var lw = 1
 var Color = "black"
 var Font = "20px serif"
 var X,Y
-var fX = cX/2 + 30 
-var fY = cY - 50
-var fW = cX/2  - 100
-var fH = cY - 100
+var fX,fY,fW,fH
 var scale = 1 //zoom
 var tempD = {}
 var tempD2 = {}
-var selH = 0
-var selW = 0
 var z_eye = -12
 var z_screen = 0
 var x_eye = -10
@@ -130,7 +120,6 @@ function meshPlot(data,contour=false,x_range=xlim,y_range=ylim,frame=false){
                 else{z = (data.z[i][j]-z_eye)/(z_screen-z_eye)}
             }
             if(z<=0){
-                //c.stroke()
                 begining = true
                 continue
             }
@@ -173,7 +162,6 @@ function meshPlot(data,contour=false,x_range=xlim,y_range=ylim,frame=false){
                 else{z = (data.z[i][j]-z_eye)/(z_screen-z_eye)}
             }
             if(z<=0){
-                //c.stroke()
                 begining = true
                 continue
             }
@@ -497,7 +485,7 @@ window.onload=function(){
     resize() 
     g = grid(100,100,[0,2*Math.PI],[-Math.PI,Math.PI],'3d',circmap)
     var R = 100
-    var r = 20
+    var r = 30
     Transform(g,Torus(R,r))
     x_eye = -R
     z_eye = -2*r
