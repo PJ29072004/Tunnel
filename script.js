@@ -40,14 +40,6 @@ function LineTo(x,y){
     Y = fY - (fH*(y-ylim[0])/(ylim[1]-ylim[0]))
     c.lineTo(X,Y)
 }
-/**Similar to c.strokeRect but uses position as seen in frame */
-function Rect(x,y,w,h){
-    X = fX + fW*(x-xlim[0])/(xlim[1]-xlim[0])
-    Y = fY - fH*(y-ylim[0])/(ylim[1]-ylim[0])
-    var W = fW*(w)/(xlim[1]-xlim[0])
-    var H = - fH*(h)/(ylim[1]-ylim[0])
-    c.strokeRect(X,Y,W,H)
-}
 function point(x,y){
     GoTo(x,y)
     Dot()
@@ -123,7 +115,7 @@ function meshPlot(data,contour=false,x_range=xlim,y_range=ylim,frame=false){
                 c.stroke()
             }
             c.beginPath()
-            c.fillStyle=data.color[i]
+            c.fillStyle=c.strokeStyle=data.color[i]
         }
         if(z>0){
             x = x_eye + (data.x[i][0]-x_eye)/z
@@ -166,7 +158,7 @@ function meshPlot(data,contour=false,x_range=xlim,y_range=ylim,frame=false){
                 c.stroke()
             }
             c.beginPath()
-            c.fillStyle=data.color[i]
+            c.fillStyle=c.strokeStyle=data.color[i]
         }
         if(z>0){
             x = x_eye + (data.x[0][j]-x_eye)/z
@@ -333,7 +325,7 @@ function RM(A,W){
  * @param {*} type "2d" or "3d"
  * @returns An object with x,y properties containing the nested arrays of x coordinates and y coordinates of points
  */
-function grid(m=10,n=10,x_range=xlim,y_range=ylim,type="3d"){
+function grid(m=10,n=10,x_range=xlim,y_range=ylim,type="3d",cmap=undefined){
     m -= 1
     n -= 1
     if(type==="2d"){
@@ -348,7 +340,6 @@ function grid(m=10,n=10,x_range=xlim,y_range=ylim,type="3d"){
             data.x.push(x)
             data.y.push(y)
         }
-        return data
     }
     if(type==="3d"){
         data = {x:[],y:[],z:[]}
@@ -365,14 +356,19 @@ function grid(m=10,n=10,x_range=xlim,y_range=ylim,type="3d"){
             data.y.push(y)
             data.z.push(z)
         }
-        return data
     }
+    if(cmap){
+        data['color']=[]
+        for(var i=0;i<=m;i++){
+            data.color.push(cmap(i/m))
+        }
+    }
+
+    return data
 
 }
 
 function Remember(color=Color,Line_width=lw,font=Font){
-    c.lineCap = 'round'
-    c.fillStyle = Color = color
     c.strokeStyle = Color = color
     c.font = Font = font
     c.LineWidth = lw = Line_width
@@ -437,58 +433,30 @@ function point(x,y){
 function Doit(){
     clear()
     c.fillStyle = 'black'
-    meshPlot(g)
+    meshPlot(g,true)
     c.fillStyle = 'red'
     point(x_eye,y_eye)
-}
-function zoomin(){
-    z_eye += 1
-    z_screen += 1
-}
-function zoomout(){
-    z_eye -= 1
-    z_screen -= 1
-}
-function l(){
-    x_eye -= 10
-}
-function r(){
-    x_eye += 10
-}
-function u(){
-    y_eye += 10
-}
-function d(){
-    y_eye -= 10
 }
 dA = 0.05
 LRM = RotM( dA,[0,1,0])
 RRM = RotM(-dA,[0,1,0])
 URM = RotM( dA,[1,0,0])
 DRM = RotM(-dA,[1,0,0])
-function L(){
-    Transform(g,LRM)
-}
-function R(){
-    Transform(g,RRM)
-}
-function U(){
-    Transform(g,URM)
-}
-function D(){
-    Transform(g,DRM)
-}
 Funkeys = {
-    '+':zoomin,
-    '-':zoomout,
-    'l':l,
-    'r':r,
-    'u':u,
-    'd':d,
-    'L':L,
-    'R':R,
-    'U':U,
-    'D':D,
+    '+':function(){z_eye += 1; z_screen += 1},
+    '-':function(){z_eye -= 1; z_screen -= 1},
+    'l':function(){x_eye -= 1},
+    'r':function(){x_eye += 1},
+    'u':function(){y_eye += 1},
+    'd':function(){y_eye -= 1},
+    'L':function(){Transform(g,LRM)},
+    'R':function(){Transform(g,RRM)},
+    'U':function(){Transform(g,URM)},
+    'D':function(){Transform(g,DRM)},
+    'ArrowUp':function(){ylim[0]+=1;ylim[1]+=1}, 
+    'ArrowDown':function(){ylim[0]-=1;ylim[1]-=1},
+    'ArrowLeft':function(){xlim[0]-=1;xlim[1]-=1},
+    'ArrowRight':function(){xlim[0]+=1;xlim[1]+=1},
 }
 pressed = {
     '+':false,
@@ -505,18 +473,29 @@ pressed = {
 Loops = {}
 dt = 80
 window.onkeydown=function(e){
+    e.preventDefault()
     if(pressed[e.key]){return}
     Loops[e.key] = setInterval(function(){Funkeys[e.key]();Doit();},dt)
     pressed[e.key] = true
 }
 window.onkeyup=function(e){
+    e.preventDefault()
     clearInterval(Loops[e.key])
     pressed[e.key]=false
 }
 window.onresize=resize
+var pulses = 3
+function circmap(t){
+    var s = Math.sin(pulses*2*Math.PI*t)
+    var c = Math.cos(pulses*2*Math.PI*t)
+    var r = Math.floor(255*((1/3) + c*(2/3) + s*(0)))
+    var g = Math.floor(255*((1/3) + c*(-1/3) + s*(3**(-0.5))))
+    var b = Math.floor(255*((1/3) + c*(-1/3) + s*(-(3**(-0.5)))))
+    return `rgb(${r},${g},${b})`
+}
 window.onload=function(){
-    resize()
-    g = grid(100,100,[0,2*Math.PI],[-Math.PI,Math.PI],'3d')
+    resize() 
+    g = grid(100,100,[0,2*Math.PI],[-Math.PI,Math.PI],'3d',circmap)
     var R = 100
     var r = 20
     Transform(g,Torus(R,r))
@@ -525,4 +504,5 @@ window.onload=function(){
     xlim = [-R-r,-R+r]
     ylim = [-r,r]
     Transform(g,RotM(Math.PI/2,[1,0,0]))
+    Remember('pink')
 }
