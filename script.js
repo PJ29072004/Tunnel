@@ -514,10 +514,7 @@ function point(x,y){
 
 function Doit(){
     clear()
-    c.fillStyle = 'black'
     meshPlot(g,true)
-    c.fillStyle = 'red'
-    point(x_eye,y_eye)
 }
 dA = 0.05
 LRM = RotM( dA,[0,1,0])
