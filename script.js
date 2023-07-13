@@ -362,6 +362,16 @@ function Round(v){
         v[i] = Math.round(v[i])
     }
 }
+function chop(v,lim){
+    for(var i=0;i<v.length;i++){
+        if(v[i]<lim[0]){
+            v[i] = lim[0]
+        }
+        if(v[i]>lim[1]){
+            v[i] = lim[1]
+        }
+    }
+}
 var pulses = 3
 function ColorCircleOn(p0,p1,p2){
     var v1 = subtract(p1,p0)
@@ -382,17 +392,10 @@ function ColorCircleOn(p0,p1,p2){
         var r = applyM(R,r0)
         var p = add(c,r)
         Round(p)
+        chop(p,[0,255])
         return `rgb(${p[0]},${p[1]},${p[2]})`
     }
     
-}
-function circmap(t){
-    var s = Math.sin(pulses*2*Math.PI*t)
-    var c = Math.cos(pulses*2*Math.PI*t)
-    var r = Math.floor(255*((1/3) + c*(2/3) + s*(0)))
-    var g = Math.floor(255*((1/3) + c*(-1/3) + s*(3**(-0.5))))
-    var b = Math.floor(255*((1/3) + c*(-1/3) + s*(-(3**(-0.5)))))
-    return `rgb(${r},${g},${b})`
 }
 Circ = ColorCircleOn([23,0,54],[214,33,166],[97,176,205])
 
@@ -509,7 +512,6 @@ function point(x,y){
     Dot()
 }
 
-
 function Doit(){
     clear()
     c.fillStyle = 'black'
@@ -579,5 +581,7 @@ window.onload=function(){
     Transform(g,RotM(Math.PI/2,[1,0,0]))
     Remember('pink')
 }
+
+console.log(Circ(0))
 
 
