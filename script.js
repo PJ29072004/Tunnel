@@ -5,7 +5,7 @@ const c = can.getContext("2d")
 const rect = can.getBoundingClientRect()
 var cX,cY
 var xlim,ylim
-var lw = 1
+var lw = 5
 var Color = "black"
 var Font = "20px serif"
 var X,Y
@@ -454,16 +454,17 @@ function grid(m=10,n=10,x_range=xlim,y_range=ylim,type="3d",cmap=undefined){
 function Remember(color=Color,Line_width=lw,font=Font){
     c.strokeStyle = Color = color
     c.font = Font = font
-    c.LineWidth = lw = Line_width
+    c.lineWidth = lw = Line_width
 }
 
 function resize(){
     cX = window.innerWidth
     cY = window.innerHeight
+    var r = Math.min(cX/4,cY/4)
     fX = cX/2
-    fY = cY
-    fW = cX/2
-    fH = cY
+    fY = cY/2+r
+    fW = 2*r
+    fH = 2*r
     can.width  = cX
     can.height = cY
     Remember()
@@ -528,12 +529,12 @@ Funkeys = {
     'r':function(){x_eye += 1},
     'u':function(){y_eye += 1},
     'd':function(){y_eye -= 1},
-    'L':function(){Transform(g,LRM)},
-    'R':function(){Transform(g,RRM)},
-    'U':function(){Transform(g,URM)},
-    'D':function(){Transform(g,DRM)},
-    'ArrowUp':function(){ylim[0]+=1;ylim[1]+=1}, 
-    'ArrowDown':function(){ylim[0]-=1;ylim[1]-=1},
+    //'L':function(){Transform(g,LRM)},
+    //'R':function(){Transform(g,RRM)},
+    'ArrowUp':function(){Transform(g,URM)},
+    'ArrowDown':function(){Transform(g,DRM)},
+    //'ArrowUp':function(){ylim[0]+=1;ylim[1]+=1}, 
+    //'ArrowDown':function(){ylim[0]-=1;ylim[1]-=1},
     'ArrowLeft':function(){xlim[0]-=1;xlim[1]-=1},
     'ArrowRight':function(){xlim[0]+=1;xlim[1]+=1},
 }
@@ -550,7 +551,7 @@ pressed = {
     'D':false,
 }
 Loops = {}
-dt = 80
+dt = 50
 window.onkeydown=function(e){
     e.preventDefault()
     if(pressed[e.key]){return}
@@ -568,15 +569,15 @@ window.onresize=resize
 window.onload=function(){
     resize() 
     g = grid(100,100,[0,2*Math.PI],[-Math.PI,Math.PI],'3d',Circ)
-    var R = 100
-    var r = 30
+    var R = 30
+    var r = 9
     Transform(g,Torus(R,r))
     x_eye = -R
     z_eye = -2*r
     xlim = [-R-r,-R+r]
     ylim = [-r,r]
-    Transform(g,RotM(Math.PI/2,[1,0,0]))
-    Remember('pink')
+    Transform(g,RotM(Math.PI/2.3,[1,0,0]))
+    setInterval(function(){Transform(g,LRM);Doit();},dt)
 }
 
 console.log(Circ(0))
